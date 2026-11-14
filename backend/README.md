@@ -48,3 +48,13 @@ through 5. The handler returns a generated `event_id` in its response.
 This is a starter API, not a deployed service. API Gateway, the Lambda role,
 table permissions, and user authentication still need to be configured in
 AWS. Do not put AWS access keys in frontend code.
+
+## Run the unit tests
+
+From the TaskJourney repository root, run:
+
+```bash
+python3 -m unittest discover -s backend/tests -v
+```
+
+These tests use an in-memory DynamoDB mock and do not access AWS.
