@@ -151,6 +151,8 @@ class LambdaHandlerTests(unittest.TestCase):
                     "due_date": "2026-12-01T18:00:00Z",
                     "description": "Math assignment",
                     "difficulty": 4,
+                    "kind": "quest",
+                    "milestones": ["2026-11-25", "2026-11-29"],
                 },
             )
         )
@@ -158,7 +160,38 @@ class LambdaHandlerTests(unittest.TestCase):
         task = result["json"]["task"]
         self.assertEqual(task["name"], "Finish homework")
         self.assertEqual(task["difficulty"], 4)
+        self.assertEqual(task["kind"], "quest")
+        self.assertEqual(task["milestones"], ["2026-11-25", "2026-11-29"])
         self.assertIn(task["event_id"], self.table.items["user-123"]["events"])
+
+    def test_create_defaults_kind_and_milestones_for_existing_clients(self):
+        result = self.call(
+            self.event(
+                "POST",
+                body={
+                    "name": "Read chapter",
+                    "due_date": "2026-12-01T18:00:00Z",
+                },
+            )
+        )
+        self.assertEqual(result["statusCode"], 201)
+        self.assertEqual(result["json"]["task"]["kind"], "quest")
+        self.assertEqual(result["json"]["task"]["milestones"], [])
+
+    def test_create_rejects_invalid_milestone_date(self):
+        result = self.call(
+            self.event(
+                "POST",
+                body={
+                    "name": "Finish homework",
+                    "due_date": "2026-12-01T18:00:00Z",
+                    "milestones": ["2026-02-30"],
+                },
+            )
+        )
+        self.assertEqual(result["statusCode"], 400)
+        self.assertIn("milestones must be an array", result["json"]["error"])
+        self.assertEqual(self.table.items, {})
 
     def test_create_rejects_invalid_json(self):
         event = self.event("POST")
@@ -190,11 +223,22 @@ class LambdaHandlerTests(unittest.TestCase):
             "calendar_id": "user-123", "events": {"event-1": first, "event-2": other}
         }
         result = self.call(
-            self.event("PUT", "/tasks/event-1", {"name": " New name ", "difficulty": 5})
+            self.event(
+                "PUT",
+                "/tasks/event-1",
+                {
+                    "name": " New name ",
+                    "difficulty": 5,
+                    "kind": "event",
+                    "milestones": ["2026-11-30"],
+                },
+            )
         )
         self.assertEqual(result["statusCode"], 200)
         self.assertEqual(result["json"]["task"]["name"], "New name")
         self.assertEqual(result["json"]["task"]["difficulty"], 5)
+        self.assertEqual(result["json"]["task"]["kind"], "event")
+        self.assertEqual(result["json"]["task"]["milestones"], ["2026-11-30"])
         self.assertEqual(self.table.items["user-123"]["events"]["event-2"], other)
 
     def test_delete_removes_only_requested_event(self):

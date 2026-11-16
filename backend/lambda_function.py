@@ -47,6 +47,15 @@ def _now():
     return datetime.now(timezone.utc).isoformat()
 
 
+def _is_iso_date(value):
+    if not isinstance(value, str):
+        return False
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date().isoformat() == value
+    except ValueError:
+        return False
+
+
 def _user_id_from_event(event):
     """Read the user identity set by API Gateway's JWT authorizer."""
     authorizer = event.get("requestContext", {}).get("authorizer", {})
@@ -104,6 +113,12 @@ def handler(event, context):
             difficulty = body.get("difficulty", 1)
             if not isinstance(difficulty, int) or not 1 <= difficulty <= 5:
                 return _response(400, {"error": "difficulty must be an integer from 1 to 5"})
+            kind = body.get("kind", "quest")
+            if kind not in ("quest", "event"):
+                return _response(400, {"error": "kind must be 'quest' or 'event'"})
+            milestones = body.get("milestones", [])
+            if not isinstance(milestones, list) or not all(_is_iso_date(date) for date in milestones):
+                return _response(400, {"error": "milestones must be an array of YYYY-MM-DD dates"})
 
             now = _now()
             event_id = str(uuid4())
@@ -113,6 +128,8 @@ def handler(event, context):
                 "due_date": due_date,
                 "description": body.get("description", ""),
                 "difficulty": difficulty,
+                "kind": kind,
+                "milestones": milestones,
                 "status": "open",
                 "created_at": now,
                 "updated_at": now,
@@ -138,7 +155,15 @@ def handler(event, context):
             body = _parse_body(event)
             if body is None:
                 return _response(400, {"error": "Request body must be valid JSON"})
-            editable = ("name", "due_date", "description", "difficulty", "status")
+            editable = (
+                "name",
+                "due_date",
+                "description",
+                "difficulty",
+                "status",
+                "kind",
+                "milestones",
+            )
             updates = {name: body[name] for name in editable if name in body}
             if not updates:
                 return _response(400, {"error": "Provide at least one editable task field"})
@@ -149,6 +174,13 @@ def handler(event, context):
                 or not 1 <= updates["difficulty"] <= 5
             ):
                 return _response(400, {"error": "difficulty must be an integer from 1 to 5"})
+            if "kind" in updates and updates["kind"] not in ("quest", "event"):
+                return _response(400, {"error": "kind must be 'quest' or 'event'"})
+            if "milestones" in updates and (
+                not isinstance(updates["milestones"], list)
+                or not all(_is_iso_date(date) for date in updates["milestones"])
+            ):
+                return _response(400, {"error": "milestones must be an array of YYYY-MM-DD dates"})
             if "name" in updates:
                 updates["name"] = updates["name"].strip()
             updates["updated_at"] = _now()
