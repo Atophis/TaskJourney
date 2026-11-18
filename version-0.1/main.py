@@ -1,6 +1,40 @@
+import sys
+from pathlib import Path
+
 import flask
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from backend.lambda_function import handler as lambda_handler
+
+
 app = flask.Flask(__name__, static_folder="Assets", static_url_path="/Assets")
+LOCAL_USER_ID = "local-user"
+
+
+def _invoke_lambda(method, path, body=None):
+    event = {
+        "rawPath": path,
+        "requestContext": {
+            "http": {"method": method},
+            "authorizer": {
+                "jwt": {"claims": {"sub": LOCAL_USER_ID}}
+            },
+        },
+    }
+    if body is not None:
+        event["body"] = body
+
+    response = lambda_handler(event, None)
+    return flask.make_response(
+        (
+            response["body"],
+            response["statusCode"],
+            response.get("headers", {}),
+        )
+    )
+
 
 @app.route("/", methods=['GET','POST'])
 def start():
@@ -37,19 +71,23 @@ def task_input():
         if not isinstance(dnotif, str):
             return flask.jsonify(error="dnotif must be a string"), 400
 
-        normalized_task = {
-            "name": name.strip(),
-            "due_date": due_date.strip(),
-            "description": description,
-            "dnotif": dnotif,
-        }
-        return flask.jsonify(
-            task=normalized_task,
-            forwarded=False,
-            message="Flask received the task JSON. Lambda forwarding is not configured.",
-        ), 202
+        return _invoke_lambda(
+            "POST",
+            "/tasks",
+            flask.request.get_data(as_text=True),
+        )
 
     return flask.render_template("taskInput.html")
+
+
+@app.route("/tasks", methods=["GET"])
+def list_tasks():
+    return _invoke_lambda("GET", "/tasks")
+
+
+@app.route("/tasks/<task_id>", methods=["GET"])
+def get_task(task_id):
+    return _invoke_lambda("GET", f"/tasks/{task_id}")
 
 
 if __name__== "__main__":
