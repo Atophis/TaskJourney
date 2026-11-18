@@ -23,15 +23,16 @@ calendar combined.
 The handler maps the authenticated user's JWT `sub` value to `calendar_id`.
 Set `CALENDAR_ID_ATTRIBUTE` only if the partition key attribute has a different
 name. The table name defaults to `dynamo_calendar_events_2` and can be changed
-with `TASKS_TABLE`.
+with `TASKS_TABLE`. `DYNAMODB_REGION` selects the table's AWS region; if unset,
+boto3 uses `AWS_REGION` (on Lambda) or the region in your local AWS profile.
 
 ## AWS setup
 
 1. Configure the Lambda runtime as Python and the handler as
    `lambda_function.handler`.
-2. The handler defaults to `dynamo_calendar_events_2`. Set `TASKS_TABLE` if
-   needed. By default, boto3 uses the Lambda function's AWS region; set
-   `DYNAMODB_REGION` only if the table is in a different region.
+2. Set `TASKS_TABLE` and `DYNAMODB_REGION` in Lambda configuration to match
+   your table. Boto3 obtains credentials from the Lambda execution role; do
+   not set access keys in the function environment.
 3. Give the Lambda execution role `dynamodb:Query`, `GetItem`, `PutItem`,
    `UpdateItem`, and `DeleteItem` permissions on this table only.
 4. Create an API Gateway HTTP API with routes `GET /tasks`, `POST /tasks`,
@@ -51,6 +52,27 @@ through 5, `kind` (`quest` or `event`), and `milestones` (an array of
 This is a starter API, not a deployed service. API Gateway, the Lambda role,
 table permissions, and user authentication still need to be configured in
 AWS. Do not put AWS access keys in frontend code.
+
+## Connecting from your computer
+
+The database is in AWS DynamoDB, so the connection is not tied to one computer.
+Your computer needs network access and its own AWS identity with permission to
+the table. Install/configure the AWS CLI and sign in using your organization's
+approved method (for example, IAM Identity Center):
+
+```bash
+aws configure sso
+aws sso login --profile taskjourney
+AWS_PROFILE=taskjourney AWS_REGION=us-east-2 python your_local_entrypoint.py
+```
+
+Set `TASKS_TABLE` if your actual table has a different name. The region above
+is an example; use the table's region. Never share access keys or commit them.
+For local-only development, grant each developer a separate least-privilege
+identity. For the deployed app, users do not connect directly to DynamoDB:
+their browser calls API Gateway with a login token, and Lambda uses its
+execution role to access the table. Give each user an account in the configured
+identity provider and keep the JWT authorizer enabled on every route.
 
 ## Run the unit tests
 

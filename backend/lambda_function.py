@@ -20,13 +20,14 @@ from uuid import uuid4
 import boto3
 from botocore.exceptions import ClientError
 
-
-TABLE_NAME = os.environ.get("TASKS_TABLE", "dynamo_calendar_events_2")
-CALENDAR_ID_ATTRIBUTE = os.environ.get("CALENDAR_ID_ATTRIBUTE", "calendar_id")
+# boto3 uses the standard AWS credential chain: a local AWS profile when run
+# on a developer machine, or the Lambda execution role when deployed.
 DYNAMODB = boto3.resource(
-    "dynamodb", region_name=os.environ.get("DYNAMODB_REGION")
+    "dynamodb",
+    region_name=os.environ.get("DYNAMODB_REGION") or os.environ.get("AWS_REGION"),
 )
-TABLE = DYNAMODB.Table(TABLE_NAME)
+TABLE = DYNAMODB.Table(os.environ.get("TASKS_TABLE", "dynamo_calendar_events_2"))
+CALENDAR_ID_ATTRIBUTE = os.environ.get("CALENDAR_ID_ATTRIBUTE", "calendar_id")
 
 
 def _response(status_code, body=None):
@@ -136,6 +137,7 @@ def handler(event, context):
             }
             # Initialize the map first: DynamoDB cannot create a nested map path
             # and its child in the same UpdateExpression.
+            
             TABLE.update_item(
                 Key=key,
                 UpdateExpression="SET #events = if_not_exists(#events, :empty)",
