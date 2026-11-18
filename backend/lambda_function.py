@@ -145,6 +145,9 @@ def handler(event, context):
             difficulty = body.get("difficulty", 1)
             if not isinstance(difficulty, int) or not 1 <= difficulty <= 5:
                 return _response(400, {"error": "difficulty must be an integer from 1 to 5"})
+            dnotif = body.get("dnotif", "")
+            if not isinstance(dnotif, str):
+                return _response(400, {"error": "dnotif must be a string"})
             kind = body.get("kind", "quest")
             if kind not in ("quest", "event"):
                 return _response(400, {"error": "kind must be 'quest' or 'event'"})
@@ -162,6 +165,7 @@ def handler(event, context):
                 "difficulty": difficulty,
                 "kind": kind,
                 "milestones": milestones,
+                "dnotif": dnotif,
                 "status": "open",
                 "created_at": now,
                 "updated_at": now,
@@ -196,6 +200,7 @@ def handler(event, context):
                 "status",
                 "kind",
                 "milestones",
+                "dnotif",
             )
             updates = {name: body[name] for name in editable if name in body}
             if not updates:
@@ -207,6 +212,8 @@ def handler(event, context):
                 or not 1 <= updates["difficulty"] <= 5
             ):
                 return _response(400, {"error": "difficulty must be an integer from 1 to 5"})
+            if "dnotif" in updates and not isinstance(updates["dnotif"], str):
+                return _response(400, {"error": "dnotif must be a string"})
             if "kind" in updates and updates["kind"] not in ("quest", "event"):
                 return _response(400, {"error": "kind must be 'quest' or 'event'"})
             if "milestones" in updates and (

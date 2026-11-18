@@ -153,6 +153,7 @@ class LambdaHandlerTests(unittest.TestCase):
                     "difficulty": 4,
                     "kind": "quest",
                     "milestones": ["2026-11-25", "2026-11-29"],
+                    "dnotif": "17:30",
                 },
             )
         )
@@ -162,6 +163,7 @@ class LambdaHandlerTests(unittest.TestCase):
         self.assertEqual(task["difficulty"], 4)
         self.assertEqual(task["kind"], "quest")
         self.assertEqual(task["milestones"], ["2026-11-25", "2026-11-29"])
+        self.assertEqual(task["dnotif"], "17:30")
         self.assertIn(task["event_id"], self.table.items["user-123"]["events"])
 
     def test_create_defaults_kind_and_milestones_for_existing_clients(self):

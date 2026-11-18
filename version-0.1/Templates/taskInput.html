@@ -4,28 +4,33 @@
 
 <div class="w3-section w3-content" style="max-width: 500px; height: 96.75vh; padding-top: 10.5vh; padding-bottom: 11vh; ">
     <div id="centerBackground" class="color-transparentWhite w3-card-4 w3-container w3-round-xlarge" style="padding: 25px;">
-        <h1>New Quest</h1>
-        <hr>
-        <label for="questname">Quest Title</label><br>
-        <input class="input-box" type="text" id="questname" name="questname"><br>
+        <form id = "taskForm" action="/taskInput" method="post">
+            <h1>New Quest</h1>
+            <hr>
+            <label for="questname">Quest Title</label><br>
+            <input class="input-box" type="text" id="questname" name="questname" required><br>
 
-        <label for="desc">Description</label><br>
-        <input class="input-box" style="min-height: 75px;" type="text" id="desc" name="desc"><br>
-        
-        
-        <label for="ddate">Date Due</label><br>
-        <input class="input-box" type="date" id="ddate" name="ddate"><br>
+            <label for="desc">Description</label><br>
+            <input class="input-box" style="min-height: 75px;" type="text" id="desc" name="desc"><br>
+            
+            
+            <label for="ddate">Date Due</label><br>
+            <input class="input-box" type="date" id="ddate" name="ddate" required><br>
 
-        <label for="dtime">Time Due</label><br>
-        <input class="input-box" type="time" id="dtime" name="dtime"><br>
-        
-        <label for="dnotif">Notification(s)</label><br>
-        <input class="input-box" type="text" id="dnotif" name="dnotif"><br>
+            <label for="dtime">Time Due</label><br>
+            <input class="input-box" type="time" id="dtime" name="dtime" required><br>
+            
+            <label for="dnotif">Notification(s)</label><br>
+            <input class="input-box" type="time" id="dnotif" name="dnotif"><br>
 
-        <div style="position: relative; bottom: 5px; align-items: center; justify-content: center;">
-            test
-        </div>
+            <div style="position: relative; bottom: 5px; align-items: center; justify-content: center;">
+                <button type="submit" onclick="window.location.href='/play'" id="task-button1" class="task-button" style="margin-right:auto">Submit</button>
+            </div>
+        </form>
+        <p id="taskFormStatus" role="status" aria-live="polite"></p>
     </div>
 </div>
+
+<script type="module" src="/Assets/task_input.mjs"></script>
 
 {% endblock %}

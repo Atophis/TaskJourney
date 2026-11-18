@@ -19,9 +19,10 @@ supplied in the request body.
 Requests and responses use JSON. A create request requires `name` and
 `due_date`; it may also include `description`, integer `difficulty` from 1
 through 5, `kind` (`quest` or `event`), and `milestones` (an array of
-`YYYY-MM-DD` dates). If omitted, `difficulty` defaults to 1, `kind` to
-`quest`, and `milestones` to an empty array. The handler returns a generated
-`event_id` in its response.
+`YYYY-MM-DD` dates). It may also include `dnotif`, the first reminder time,
+which is stored as provided. If omitted, `difficulty` defaults to 1, `kind`
+to `quest`, and `milestones` to an empty array. The handler returns a
+generated `event_id` in its response.
 
 This is starter storage, not durable production storage. Do not put AWS access
 keys in frontend code.

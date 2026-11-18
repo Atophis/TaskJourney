@@ -46,7 +46,6 @@ test("createTask sends the authenticated JSON payload and returns the created ta
         description: "Math assignment",
         difficulty: 4,
         kind: "quest",
-        milestones: [],
     });
     assert.deepEqual(task, createdTask);
 });
@@ -106,6 +105,33 @@ test("datePartsToIso rejects impossible calendar dates", () => {
         () => datePartsToIso({ day: "30", month: "02", year: "2026" }),
         { name: "TypeError", message: "date is not a valid date" },
     );
+});
+
+test("createTask and updateTask preserve the dnotif form field", async () => {
+    const requestBodies = [];
+    const api = createTaskApi({
+        baseUrl: "https://api.example.test",
+        getAccessToken: async () => "jwt-token",
+        fetchImpl: async (url, options) => {
+            requestBodies.push(JSON.parse(options.body));
+            return jsonResponse(options.method === "POST" ? 201 : 200, {
+                task: { event_id: "event-3", dnotif: "17:30" },
+            });
+        },
+    });
+
+    await api.createTask({
+        questname: "Attend meeting",
+        desc: "Team sync",
+        ddate: "2026-12-01",
+        dtime: "18:00",
+        dnotif: "17:30",
+    });
+    await api.updateTask("event-3", { dnotif: "18:30" });
+
+    assert.equal(requestBodies[0].dnotif, "17:30");
+    assert.equal("milestones" in requestBodies[0], false);
+    assert.deepEqual(requestBodies[1], { dnotif: "18:30" });
 });
 
 test("API errors preserve the HTTP status and server message", async () => {

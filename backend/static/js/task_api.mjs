@@ -87,25 +87,43 @@ function normalizeTask(task) {
         throw new TypeError("task must be an object");
     }
 
-    if (task.name !== undefined && task.title !== undefined) {
-        throw new TypeError("Provide either name or title, not both");
+    const nameFields = ["name", "title", "questname"].filter((field) => task[field] !== undefined);
+    if (nameFields.length > 1) {
+        throw new TypeError("Provide only one of name, title, or questname");
     }
-    const rawName = task.name ?? task.title;
+    const rawName = task.name ?? task.title ?? task.questname;
     const name = typeof rawName === "string" ? rawName.trim() : "";
-    const description = task.description ?? "";
+    const descriptionFields = ["description", "desc"].filter((field) => task[field] !== undefined);
+    if (descriptionFields.length > 1) {
+        throw new TypeError("Provide only one of description or desc");
+    }
+    const description = task.description ?? task.desc ?? "";
     const difficulty = task.difficulty ?? 1;
-    const hasFormDate = task.completion_date !== undefined || task.due_time !== undefined;
+    const hasFormDate = task.completion_date !== undefined
+        || task.due_time !== undefined
+        || task.ddate !== undefined
+        || task.dtime !== undefined;
     if (hasFormDate && task.due_date !== undefined) {
         throw new TypeError("Provide due_date or completion_date and due_time, not both");
     }
-    if (hasFormDate && (task.completion_date === undefined || task.due_time === undefined)) {
-        throw new TypeError("Both completion_date and due_time are required");
+    if (hasFormDate) {
+        const completionDate = task.completion_date ?? task.ddate;
+        const dueTime = task.due_time ?? task.dtime;
+        if (completionDate === undefined || dueTime === undefined) {
+            throw new TypeError("Both completion_date and due_time are required");
+        }
     }
     const dueDate = hasFormDate
-        ? localDateTimeToIso(task.completion_date, task.due_time)
+        ? localDateTimeToIso(task.completion_date ?? task.ddate, task.due_time ?? task.dtime)
         : typeof task.due_date === "string" ? task.due_date.trim() : "";
+    const dnotif = task.dnotif;
+    if (dnotif !== undefined && typeof dnotif !== "string") {
+        throw new TypeError("dnotif must be a string");
+    }
     const kind = task.kind ?? "quest";
-    const milestones = normalizeMilestones(task.milestones ?? []);
+    const milestones = task.milestones === undefined
+        ? undefined
+        : normalizeMilestones(task.milestones);
 
     if (!name) {
         throw new TypeError("name is required");
@@ -123,7 +141,15 @@ function normalizeTask(task) {
         throw new TypeError("kind must be 'quest' or 'event'");
     }
 
-    return { name, due_date: dueDate, description, difficulty, kind, milestones };
+    return {
+        name,
+        due_date: dueDate,
+        description,
+        difficulty,
+        kind,
+        ...(milestones !== undefined ? { milestones } : {}),
+        ...(dnotif !== undefined ? { dnotif } : {}),
+    };
 }
 
 function normalizeUpdates(updates) {
@@ -134,10 +160,15 @@ function normalizeUpdates(updates) {
     const allowedFields = new Set([
         "name",
         "title",
+        "questname",
+        "description",
+        "desc",
         "due_date",
         "completion_date",
         "due_time",
-        "description",
+        "ddate",
+        "dtime",
+        "dnotif",
         "difficulty",
         "status",
         "kind",
@@ -154,27 +185,48 @@ function normalizeUpdates(updates) {
     }
 
     const normalized = { ...updates };
+    if ("questname" in normalized) {
+        if ("name" in normalized || "title" in normalized) {
+            throw new TypeError("Provide only one name field");
+        }
+        normalized.name = normalized.questname;
+        delete normalized.questname;
+    }
     if ("title" in normalized) {
         if ("name" in normalized) {
-            throw new TypeError("Provide either name or title, not both");
+            throw new TypeError("Provide only one name field");
         }
         normalized.name = normalized.title;
         delete normalized.title;
     }
-    const hasFormDate = normalized.completion_date !== undefined || normalized.due_time !== undefined;
+    if ("desc" in normalized) {
+        if ("description" in normalized) {
+            throw new TypeError("Provide only one of description or desc");
+        }
+        normalized.description = normalized.desc;
+        delete normalized.desc;
+    }
+    const hasFormDate = normalized.completion_date !== undefined
+        || normalized.ddate !== undefined
+        || normalized.due_time !== undefined
+        || normalized.dtime !== undefined;
     if (hasFormDate && normalized.due_date !== undefined) {
         throw new TypeError("Provide due_date or completion_date and due_time, not both");
     }
     if (hasFormDate) {
-        if (normalized.completion_date === undefined || normalized.due_time === undefined) {
+        const completionDate = normalized.completion_date ?? normalized.ddate;
+        const dueTime = normalized.due_time ?? normalized.dtime;
+        if (completionDate === undefined || dueTime === undefined) {
             throw new TypeError("Both completion_date and due_time are required");
         }
         normalized.due_date = localDateTimeToIso(
-            normalized.completion_date,
-            normalized.due_time,
+            completionDate,
+            dueTime,
         );
         delete normalized.completion_date;
+        delete normalized.ddate;
         delete normalized.due_time;
+        delete normalized.dtime;
     }
     if ("name" in normalized) {
         if (typeof normalized.name !== "string" || !normalized.name.trim()) {
@@ -190,6 +242,9 @@ function normalizeUpdates(updates) {
     }
     if ("description" in normalized && typeof normalized.description !== "string") {
         throw new TypeError("description must be a string");
+    }
+    if ("dnotif" in normalized && typeof normalized.dnotif !== "string") {
+        throw new TypeError("dnotif must be a string");
     }
     if (
         "difficulty" in normalized
