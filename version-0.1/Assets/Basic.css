@@ -1,0 +1,62 @@
+:root {
+    color-scheme: light;
+    background-color: #031119;
+}
+
+* {
+    font-family: Geneva, 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    /* font-family: Garamond, Georgia, 'Times New Roman', Times, serif; */
+    /* font-family: Garamond, Georgia, 'Times New Roman', Times, serif; */
+}
+
+header {
+  background-color: #666;
+  padding: 30px;
+  text-align: center;
+  font-size: 35px;
+  color: white;
+}
+
+body {
+    background-color: #BACBAC;
+}
+
+/* GUI architecture */
+.widget-box {
+    overflow: hidden;
+    border-radius: 18px;
+    box-shadow: 0 20px 40px rgba(4, 28, 44, 0.25);
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    justify-content: center;
+    align-items: center;
+    /* height: max-content; */
+}
+.input-box {
+    width: 100%;
+    border-radius: 7px;
+    border-width: 1px;
+    border-color: #383a3b;
+    margin-top: 3px;
+    margin-bottom: 20px;
+}
+
+/* Buttons */
+.task-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    border: 0;
+    text-decoration: none;
+    text-align: center;
+    color: #131313;
+    cursor: pointer;
+}
+.task-button:hover { background-color:rgba(165, 168, 171, 0.5); }
+
+/* colors */
+.color-transparentWhite {border: 3px solid #fefefe; background-color: rgba(251, 248, 249, 0.8);}
+.color-transparentGreen {border: 1px solid #f1fae9; background-color: rgba(132, 160, 113, 0.8);}
