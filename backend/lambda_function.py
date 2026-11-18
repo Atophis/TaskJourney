@@ -1,4 +1,4 @@
-"""TaskJourney HTTP API handler backed by DynamoDB.
+"""TaskJourney HTTP API handler backed by a simple in-memory database.
 
 Expected API Gateway HTTP API routes:
   GET    /tasks
@@ -7,27 +7,60 @@ Expected API Gateway HTTP API routes:
   PUT    /tasks/{task_id}
   DELETE /tasks/{task_id}
 
-Configure a JWT authorizer and set TASKS_TABLE. The authenticated user's
-JWT `sub` claim is used as the owner key; never accept user_id from the body.
+The authenticated user's JWT `sub` claim is used as the owner key; never
+accept user_id from the body. Data lasts only while this process is running.
 """
 
 import json
-import os
 from datetime import datetime, timezone
-from decimal import Decimal
 from uuid import uuid4
 
-import boto3
-from botocore.exceptions import ClientError
 
-# boto3 uses the standard AWS credential chain: a local AWS profile when run
-# on a developer machine, or the Lambda execution role when deployed.
-DYNAMODB = boto3.resource(
-    "dynamodb",
-    region_name=os.environ.get("DYNAMODB_REGION") or os.environ.get("AWS_REGION"),
-)
-TABLE = DYNAMODB.Table(os.environ.get("TASKS_TABLE", "dynamo_calendar_events_2"))
-CALENDAR_ID_ATTRIBUTE = os.environ.get("CALENDAR_ID_ATTRIBUTE", "calendar_id")
+class ConditionalCheckFailedException(Exception):
+    """Raised when an in-memory conditional write cannot be applied."""
+
+
+class InMemoryTable:
+    """Small process-local table implementing the handler's storage calls."""
+
+    def __init__(self):
+        self.items = {}
+        self.meta = type("Meta", (), {})()
+        self.meta.client = type("Client", (), {})()
+        self.meta.client.exceptions = type("Exceptions", (), {
+            "ConditionalCheckFailedException": ConditionalCheckFailedException
+        })()
+
+    def get_item(self, *, Key, **kwargs):
+        import copy
+        item = self.items.get(Key["calendar_id"])
+        return {"Item": copy.deepcopy(item)} if item is not None else {}
+
+    def update_item(self, *, Key, UpdateExpression, ExpressionAttributeNames,
+                    ExpressionAttributeValues=None, ConditionExpression=None, **kwargs):
+        import copy
+        calendar_id = Key["calendar_id"]
+        calendar = self.items.setdefault(calendar_id, {"calendar_id": calendar_id})
+        if "if_not_exists" in UpdateExpression:
+            calendar.setdefault("events", {})
+            return {}
+        event_id = ExpressionAttributeNames["#event_id"]
+        events = calendar.setdefault("events", {})
+        if UpdateExpression.startswith("SET"):
+            if ConditionExpression and "attribute_not_exists" in ConditionExpression and event_id in events:
+                raise ConditionalCheckFailedException()
+            events[event_id] = copy.deepcopy(ExpressionAttributeValues[":event"])
+            return {}
+        if UpdateExpression.startswith("REMOVE"):
+            if ConditionExpression and event_id not in events:
+                raise ConditionalCheckFailedException()
+            events.pop(event_id, None)
+            return {}
+        raise AssertionError(f"Unexpected update expression: {UpdateExpression}")
+
+
+TABLE = InMemoryTable()
+CALENDAR_ID_ATTRIBUTE = "calendar_id"
 
 
 def _response(status_code, body=None):
@@ -39,8 +72,6 @@ def _response(status_code, body=None):
 
 
 def _json_default(value):
-    if isinstance(value, Decimal):
-        return int(value) if value % 1 == 0 else float(value)
     raise TypeError(f"Cannot JSON encode {type(value).__name__}")
 
 
@@ -219,7 +250,5 @@ def handler(event, context):
 
     except TABLE.meta.client.exceptions.ConditionalCheckFailedException:
         return _response(404, {"error": "Task not found"})
-    except ClientError:
-        # Log the detailed exception to CloudWatch in production; keep internal
-        # AWS details out of the response sent to the browser.
+    except Exception:
         return _response(500, {"error": "Database request failed"})
