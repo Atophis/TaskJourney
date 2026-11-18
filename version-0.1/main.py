@@ -10,5 +10,9 @@ def start():
 def insert():
     return flask.render_template("home.html")
 
+@app.route("/taskInput")
+def task_input():
+    return flask.render_template("taskInput.html")
+
 if __name__== "__main__":
     app.run(debug=False, host='127.0.0.1', port=5000)
