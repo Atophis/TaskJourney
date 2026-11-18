@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="home" content="width=device-width, initial-scale=1">
+    <title>{% block page_title %}Task Journey{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='Buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='Basic.css') }}">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/6/w3.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-colors-ios.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-colors-flat.css">
+</head>
+
+<body id="body_id">
+    <!-- Taskbar -->
+    <div class="w3-top">
+    <nav class="w3-flex color-transparentWhite w3-hide-small">
+
+        <div id="taskbar" class="color-transparentWhite w3-flex-auto" style="border: 0;">
+            <div class="w3-flex-column" style="display: flex;">
+                <a id="task-button1" href="#" class="task-button" style="margin-right:auto">Add New Task</a>
+            </div>
+        </div>
+        <div id="taskbar" class="color-transparentWhite w3-flex" style="border: 0;"></div>
+
+    </nav>
+    </div>
+
+    <!-- Music Bar -->
+    <div class="w3-bottom">
+    <nav class="w3-flex w3-black w3-hide-small" style="justify-content: center;">
+
+        <div id="taskbar" class="color-transparentWhite w3-flex" style="border: 0;">
+            <div class="w3-flex-column" style="display: flex; justify-content: center; align-items: center;">
+                <audio controls autoplay class="w3-center color-transparentWhite" style="width: 100vw; height: 4vh;"
+                    <source id="mainAudio" src="../Assets/Music/Beneath the Surface - Yasunori Nishiki (Octopath).m4a" type="audio/m4a">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+
+    </nav>
+    </div>
+
+    <!-- Content -->
+    {% block content %}{% endblock %}
+
+
+</body>
+</html>
