@@ -1,3 +1,1 @@
-# boto3 is included in the managed Python Lambda runtime. Package this only
-# if you want to pin the SDK version used by the deployment.
-boto3
+# The in-memory backend uses only the Python standard library.

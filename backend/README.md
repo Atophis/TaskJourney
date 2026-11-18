@@ -1,46 +1,20 @@
 # TaskJourney database starter
 
-`lambda_function.py` is a Python AWS Lambda handler for an API Gateway **HTTP
-API**. Lambda is the AWS service that runs this handler when an HTTP request
-arrives; API Gateway provides the web URL and routes requests to it. The
-handler uses the authenticated user's JWT `sub` claim as the task owner and
-calls DynamoDB with the Lambda execution role.
+`lambda_function.py` is a Python HTTP API handler with a process-local,
+in-memory task store. It runs without AWS credentials, boto3, or a DynamoDB
+table. The authenticated user's JWT `sub` claim is used as the task owner.
 
-## Existing table shape
+## In-memory storage
 
-Your table has a single partition key:
+Tasks are stored in process memory, grouped by the authenticated user's `sub`.
+They remain available while that process runs, then disappear when it stops
+or restarts. Separate server instances do not share data.
 
-- Partition key: `calendar_id` (String)
-- No sort key
-
-Because a DynamoDB table without a sort key can contain only one top-level
-item for each `calendar_id`, this starter stores events in an `events` map on
-that calendar item, keyed by `event_id`. Event values include `name`,
-`due_date`, `description`, `difficulty`, `status`, `created_at`, and
-`updated_at`. The table's 400 KB item size limit applies to all events in a
-calendar combined.
-
-The handler maps the authenticated user's JWT `sub` value to `calendar_id`.
-Set `CALENDAR_ID_ATTRIBUTE` only if the partition key attribute has a different
-name. The table name defaults to `dynamo_calendar_events_2` and can be changed
-with `TASKS_TABLE`. `DYNAMODB_REGION` selects the table's AWS region; if unset,
-boto3 uses `AWS_REGION` (on Lambda) or the region in your local AWS profile.
-
-## AWS setup
-
-1. Configure the Lambda runtime as Python and the handler as
-   `lambda_function.handler`.
-2. Set `TASKS_TABLE` and `DYNAMODB_REGION` in Lambda configuration to match
-   your table. Boto3 obtains credentials from the Lambda execution role; do
-   not set access keys in the function environment.
-3. Give the Lambda execution role `dynamodb:Query`, `GetItem`, `PutItem`,
-   `UpdateItem`, and `DeleteItem` permissions on this table only.
-4. Create an API Gateway HTTP API with routes `GET /tasks`, `POST /tasks`,
-   `GET /tasks/{task_id}`, `PUT /tasks/{task_id}`, and
-   `DELETE /tasks/{task_id}`; connect them to this Lambda.
-5. Configure a JWT authorizer on every route. The handler rejects requests
-   without an authenticated `sub` claim and does not trust a user ID supplied
-   in the request body.
+Create an API Gateway HTTP API with routes `GET /tasks`, `POST /tasks`,
+`GET /tasks/{task_id}`, `PUT /tasks/{task_id}`, and `DELETE /tasks/{task_id}`;
+connect them to the handler. Configure authentication to supply the JWT `sub`
+claim. The handler rejects requests without it and does not trust a user ID
+supplied in the request body.
 
 Requests and responses use JSON. A create request requires `name` and
 `due_date`; it may also include `description`, integer `difficulty` from 1
@@ -49,30 +23,8 @@ through 5, `kind` (`quest` or `event`), and `milestones` (an array of
 `quest`, and `milestones` to an empty array. The handler returns a generated
 `event_id` in its response.
 
-This is a starter API, not a deployed service. API Gateway, the Lambda role,
-table permissions, and user authentication still need to be configured in
-AWS. Do not put AWS access keys in frontend code.
-
-## Connecting from your computer
-
-The database is in AWS DynamoDB, so the connection is not tied to one computer.
-Your computer needs network access and its own AWS identity with permission to
-the table. Install/configure the AWS CLI and sign in using your organization's
-approved method (for example, IAM Identity Center):
-
-```bash
-aws configure sso
-aws sso login --profile taskjourney
-AWS_PROFILE=taskjourney AWS_REGION=us-east-2 python your_local_entrypoint.py
-```
-
-Set `TASKS_TABLE` if your actual table has a different name. The region above
-is an example; use the table's region. Never share access keys or commit them.
-For local-only development, grant each developer a separate least-privilege
-identity. For the deployed app, users do not connect directly to DynamoDB:
-their browser calls API Gateway with a login token, and Lambda uses its
-execution role to access the table. Give each user an account in the configured
-identity provider and keep the JWT authorizer enabled on every route.
+This is starter storage, not durable production storage. Do not put AWS access
+keys in frontend code.
 
 ## Run the unit tests
 
@@ -82,7 +34,7 @@ From the TaskJourney repository root, run:
 python3 -m unittest discover -s backend/tests -v
 ```
 
-These tests use an in-memory DynamoDB mock and do not access AWS.
+The handler uses in-memory storage and does not access AWS.
 
 ## Browser JSON connector
 
