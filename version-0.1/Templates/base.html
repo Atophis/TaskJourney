@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='Buttons.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='Basic.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='Switch.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='sideNav.css') }}">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/6/w3.css">
     <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-colors-ios.css">
     <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-colors-flat.css">
@@ -42,6 +44,27 @@
 
     </nav>
     </div>
+
+    <!-- Side Navigation -->
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="#">Frequently Asked Questions</a>
+        <a href="#">Norification Settings</a>
+        <a href="#">User Settings</a>
+        <a href="#">Purchase History</a>
+        <a href="#">Quest log</a>
+    </div>
+    <span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776;</span>
+
+    <script>
+    function openNav() {
+    document.getElementById("mySidenav").style.width = "250px";
+    }
+
+    function closeNav() {
+    document.getElementById("mySidenav").style.width = "0";
+    }
+    </script>
 
     <!-- Content -->
     {% block content %}{% endblock %}

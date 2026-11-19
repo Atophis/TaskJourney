@@ -5,14 +5,15 @@
 <div class="w3-section w3-content" style="max-width: 500px; height: 96.75vh; padding-top: 10.5vh; padding-bottom: 11vh; ">
     <div id="centerBackground" class="color-transparentWhite w3-card-4 w3-container w3-round-xlarge" style="padding: 25px;">
         <form id = "taskForm" action="/taskInput" method="post">
+            <p>Quest  Event</p>
+            <label class="switch"><input type="checkbox"><span class="slider round"></span></label>
             <h1>New Quest</h1>
             <hr>
             <label for="questname">Quest Title</label><br>
             <input class="input-box" type="text" id="questname" name="questname" required><br>
 
             <label for="desc">Description</label><br>
-            <input class="input-box" style="min-height: 75px;" type="text" id="desc" name="desc"><br>
-            
+            <input class="input-box" style="min-height: 75px;" type="text" id="desc" name="desc"><br> 
             
             <label for="ddate">Date Due</label><br>
             <input class="input-box" type="date" id="ddate" name="ddate" required><br>

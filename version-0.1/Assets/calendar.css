@@ -5,12 +5,12 @@ body {
 }
 
 /* General Label */
-label {
+.calendar-card label {
   height: 1rem;
   z-index: 10 !important;
 }
 
-label.toggle {
+.calendar-card label.toggle {
   font-family: Courier;
   width: 0.75rem;
   padding: 0.25rem;
@@ -18,7 +18,7 @@ label.toggle {
   top: 0.25rem;
 }
 
-label:not(.toggle) {
+.calendar-card label:not(.toggle) {
   background-color: #fff;
   border-left: 1px solid rgb(0, 0, 0);
   border-right: 1px solid rgb(0, 0, 0);
@@ -1094,8 +1094,8 @@ label[for="month-12"] {
   left: 1rem;
 }
 
-label,
-input {
+.calendar-card label,
+.calendar-card input {
   margin-left: 100px;
 }
 
