@@ -72,6 +72,10 @@ def faq():
 def notification_settings():
     return flask.render_template("notificationSetting.html")
 
+@app.route("/login", methods=['GET'])
+def login():
+    return flask.render_template("login.html")
+
 @app.route("/userSettings", methods=['GET'])
 def user_settings():
     return flask.render_template("userSetting.html")
