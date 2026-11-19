@@ -76,6 +76,10 @@ def notification_settings():
 def login():
     return flask.render_template("login.html")
 
+@app.route("/viewSelec", methods=['GET'])
+def view_selection():
+    return flask.render_template("viewSelec.html")
+
 @app.route("/userSettings", methods=['GET'])
 def user_settings():
     return flask.render_template("userSetting.html")
