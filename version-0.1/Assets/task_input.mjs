@@ -57,7 +57,7 @@ form.addEventListener("submit", async (event) => {
             throw new Error(result.error || `Request failed (${response.status})`);
         }
         const homeUrl = new URL("/play", window.location.origin);
-        homeUrl.searchParams.set("task_name", result.task.name);
+        homeUrl.searchParams.set("task_id", result.task.event_id);
         window.location.assign(homeUrl.toString());
     } catch (error) {
         status.textContent = `Unable to send task to Flask: ${error.message}`;

@@ -42,8 +42,23 @@ def start():
 
 @app.route("/play", methods=['GET'])
 def insert():
+    task_id = flask.request.args.get("task_id", "").strip()
     task_name = flask.request.args.get("task_name", "")
-    return flask.render_template("home.html", task_name=task_name)
+    task = None
+
+    if task_id:
+        response = _invoke_lambda("GET", f"/tasks/{task_id}")
+        if response.status_code != 200:
+            return response
+        task = response.get_json()["task"]
+    elif task_name:
+        response = _invoke_lambda("GET", "/tasks")
+        if response.status_code != 200:
+            return response
+        tasks = response.get_json()["tasks"]
+        task = next((item for item in tasks if item["name"] == task_name), None)
+
+    return flask.render_template("home.html", task=task)
 
 @app.route("/shop", methods=['GET'])
 def shop():

@@ -214,15 +214,40 @@
         </div>
         <div id="centerBackground" class="color-transparentWhite widget-box w3-card w3-container">
             <button onclick="window.location.href='/shop'" id="task-button1" href="#" class="task-button" style="margin-right:auto">View Shop</button>
-            <img src="version-0.1\Assets\shop img.jpg" alt="ds">
+            <img src="Assets/shop img.jpg" alt="Shop Image", width="100%" height="100%">
         </div>
-        <div id="centerBackground" class="color-transparentWhite widget-box w3-card w3-container">{{ task_name }}</div>
-        <div id="centerBackground" class="color-transparentWhite widget-box w3-card w3-container">test</div>
         <div id="centerBackground" class="color-transparentWhite widget-box w3-card w3-container">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            <button onclick="window.location.href='/taskInput'" id="task-button1" href="#" class="task-button" style="margin-right:auto">Add New Task</button>
+            <section aria-labelledby="task-details-heading">
+                <h2 id="task-details-heading">Task Details</h2>
+                <dl>
+                    {% if task %}
+                    <dt>Title</dt>
+                    <dd>{{ task.name }}</dd>
+
+                    <dt>Description</dt>
+                    <dd>{{ task.description or "No description provided" }}</dd>
+
+                    <dt>Due</dt>
+                    <dd><time datetime="{{ task.due_date }}">{{ task.due_date }}</time></dd>
+
+                    <dt>Notification</dt>
+                    <dd>{{ task.dnotif or "None" }}</dd>
+
+                    <dt>Difficulty</dt>
+                    <dd>{{ task.difficulty }}</dd>
+
+                    <dt>Type</dt>
+                    <dd>{{ task.kind }}</dd>
+                    {% else %}
+                    <p>No tasks entered yet.</p>
+                    {% endif %}
+                </dl>
+
+            </section>
         </div>
         <div id="centerBackground" class="color-transparentWhite widget-box w3-card w3-container">Task List 
-            <button onclick="window.location.href='/taskInput'" id="task-button1" href="#" class="task-button" style="margin-right:auto">Add New Task</button>
+            
         </div>
     </div>
     
