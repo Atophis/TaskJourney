@@ -64,6 +64,26 @@ def insert():
 def shop():
     return flask.render_template("shop.html")
 
+@app.route("/faq", methods=['GET'])
+def faq():
+    return flask.render_template("faq.html")
+
+@app.route("/notificationSettings", methods=['GET'])
+def notification_settings():
+    return flask.render_template("notificationSetting.html")
+
+@app.route("/userSettings", methods=['GET'])
+def user_settings():
+    return flask.render_template("userSetting.html")
+
+@app.route("/purchaseHistory", methods=['GET'])
+def purchase_history():
+    return flask.render_template("purchaseHistory.html")
+
+@app.route("/questLog", methods=['GET'])
+def quest_log():
+    return flask.render_template("questLog.html")
+
 @app.route("/taskInput", methods=["GET", "POST"])
 def task_input():
     if flask.request.method == "POST":
