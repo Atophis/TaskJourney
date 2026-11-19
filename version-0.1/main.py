@@ -80,6 +80,10 @@ def login():
 def view_selection():
     return flask.render_template("viewSelec.html")
 
+@app.route("/register", methods=['GET'])
+def register():
+    return flask.render_template("register.html")
+
 @app.route("/userSettings", methods=['GET'])
 def user_settings():
     return flask.render_template("userSetting.html")
