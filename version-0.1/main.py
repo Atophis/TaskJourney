@@ -45,6 +45,10 @@ def insert():
     task_name = flask.request.args.get("task_name", "")
     return flask.render_template("home.html", task_name=task_name)
 
+@app.route("/shop", methods=['GET'])
+def shop():
+    return flask.render_template("shop.html")
+
 @app.route("/taskInput", methods=["GET", "POST"])
 def task_input():
     if flask.request.method == "POST":
