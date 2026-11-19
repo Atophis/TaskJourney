@@ -1,105 +1,17 @@
-"""Unit tests for the Lambda handler; all DynamoDB access is in memory."""
-
-import copy
-import importlib
+"""Unit tests for the Lambda handler's in-memory database."""
+"""python3 -m unittest backend.tests.test_lambda_function -v"""
 import json
-import sys
-import types
 import unittest
-from unittest.mock import patch
-
-
-class ConditionalCheckFailedException(Exception):
-    pass
-
-
-class FakeClientError(Exception):
-    pass
-
-
-class FakeTable:
-    """Small in-memory stand-in for the DynamoDB calls used by the handler."""
-
-    def __init__(self):
-        self.items = {}
-        self.meta = types.SimpleNamespace(
-            client=types.SimpleNamespace(
-                exceptions=types.SimpleNamespace(
-                    ConditionalCheckFailedException=ConditionalCheckFailedException
-                )
-            )
-        )
-
-    def get_item(self, *, Key, **kwargs):
-        calendar_id = Key["calendar_id"]
-        item = self.items.get(calendar_id)
-        return {"Item": copy.deepcopy(item)} if item is not None else {}
-
-    def update_item(
-        self,
-        *,
-        Key,
-        UpdateExpression,
-        ExpressionAttributeNames,
-        ExpressionAttributeValues=None,
-        ConditionExpression=None,
-        **kwargs,
-    ):
-        calendar_id = Key["calendar_id"]
-        calendar = self.items.setdefault(calendar_id, {"calendar_id": calendar_id})
-
-        if "if_not_exists" in UpdateExpression:
-            calendar.setdefault("events", {})
-            return {}
-
-        event_id = ExpressionAttributeNames["#event_id"]
-        events = calendar.setdefault("events", {})
-        if UpdateExpression.startswith("SET"):
-            if ConditionExpression and "attribute_not_exists" in ConditionExpression and event_id in events:
-                raise ConditionalCheckFailedException()
-            events[event_id] = copy.deepcopy(ExpressionAttributeValues[":event"])
-            return {}
-
-        if UpdateExpression.startswith("REMOVE"):
-            if ConditionExpression and event_id not in events:
-                raise ConditionalCheckFailedException()
-            events.pop(event_id, None)
-            return {}
-
-        raise AssertionError(f"Unexpected update expression: {UpdateExpression}")
-
-
-def _load_handler_module():
-    fake_table = FakeTable()
-    fake_boto3 = types.ModuleType("boto3")
-    fake_boto3.resource = lambda *args, **kwargs: types.SimpleNamespace(
-        Table=lambda table_name: fake_table
-    )
-    fake_botocore = types.ModuleType("botocore")
-    fake_botocore_exceptions = types.ModuleType("botocore.exceptions")
-    fake_botocore_exceptions.ClientError = FakeClientError
-    fake_botocore.exceptions = fake_botocore_exceptions
-
-    with patch.dict(
-        sys.modules,
-        {"boto3": fake_boto3, "botocore": fake_botocore,
-         "botocore.exceptions": fake_botocore_exceptions},
-    ):
-        sys.modules.pop("backend.lambda_function", None)
-        module = importlib.import_module("backend.lambda_function")
-    return module, fake_table
+from backend import lambda_function as module
 
 
 class LambdaHandlerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.module, _ = _load_handler_module()
+        cls.module = module
 
     def setUp(self):
-        self.table = FakeTable()
-        self.table.meta.client.exceptions.ConditionalCheckFailedException = (
-            ConditionalCheckFailedException
-        )
+        self.table = self.module.InMemoryTable()
         self.module.TABLE = self.table
 
     def event(self, method, path="/tasks", body=None, user_id="user-123"):
